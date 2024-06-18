@@ -37,7 +37,7 @@ pipeline {
                 changeRequest()
             }
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
                     script {
                         def prBranch = env.BRANCH_NAME
                         echo "Running Terraform commands on pull request branch ${prBranch}"
@@ -56,7 +56,7 @@ pipeline {
                 branch 'main'
             }
             steps {
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
                     script {
                         def mainBranch = env.BRANCH_NAME
                         echo "Running Terraform apply on main branch ${mainBranch}"
