@@ -1,9 +1,24 @@
 pipeline {
     agent any
-    parameters { 
-        choice(name: 'action', choices: ['apply', 'destroy'], description: 'Perform Action')
-    }
+    
     stages {
+        stage('Checkout') {
+            steps {
+                script{
+                     // Checkout code from GitHub
+                    def branchName = env.BRANCH_NAME
+                    echo "Checking out code from branch: ${branchName}"
+                    checkout([$class: 'GitSCM', 
+                    branches: [[name: "${branchName}"]],  // Fetch code from all branches
+                    userRemoteConfigs: [[url: 'https://github.com/AnirudhBadoni/AwsInfra.git']]]) 
+
+                    // Get the latest commit hash
+                    def commitId = sh(script: 'git rev-parse HEAD', returnStdout: true).trim().take(7)
+                    env.IMAGE_TAG = "${branchName}-${commitId}"
+                    echo "Docker image tag: ${env.IMAGE_TAG}"
+                }
+            }
+        }
         stage ('Initialize Terraform and validate') {
             when { anyOf {branch "new-branch";changeRequest() } }
             steps {
