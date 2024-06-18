@@ -15,12 +15,12 @@ pipeline {
                     script {
                         def branchName = env.BRANCH_NAME
                         echo "Running Terraform commands on branch ${branchName}"
-                        sh 'cd infra'
+                        dir('infra'){
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
                         sh 'terraform plan -out=plan.tfplan'
-
+                        }
                         // Optional: Run Checkov scan
                         try {
                             sh 'checkov -d .'
@@ -41,11 +41,12 @@ pipeline {
                     script {
                         def prBranch = env.BRANCH_NAME
                         echo "Running Terraform commands on pull request branch ${prBranch}"
-                        sh 'cd infra'
+                        dir('infra'){
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
                         sh 'terraform plan -out=pr-plan.tfplan'
+                        }
                     }
                 }
             }
@@ -60,11 +61,12 @@ pipeline {
                     script {
                         def mainBranch = env.BRANCH_NAME
                         echo "Running Terraform apply on main branch ${mainBranch}"
-                        sh 'cd infra'
+                        dir('infra'){
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
                         sh 'terraform apply -auto-approve'
+                        }
                     }
                 }
             }
