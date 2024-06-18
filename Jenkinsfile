@@ -15,7 +15,7 @@ pipeline {
                     script {
                         def branchName = env.BRANCH_NAME
                         echo "Running Terraform commands on branch ${branchName}"
-
+                        sh 'cd infra'
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
@@ -41,7 +41,7 @@ pipeline {
                     script {
                         def prBranch = env.BRANCH_NAME
                         echo "Running Terraform commands on pull request branch ${prBranch}"
-
+                        sh 'cd infra'
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
@@ -60,7 +60,7 @@ pipeline {
                     script {
                         def mainBranch = env.BRANCH_NAME
                         echo "Running Terraform apply on main branch ${mainBranch}"
-
+                        sh 'cd infra'
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
