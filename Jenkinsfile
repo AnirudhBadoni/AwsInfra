@@ -34,8 +34,7 @@ pipeline {
                 }
             }
         }
-    }
-
+    
         stage('On Pull Request') {
             when {
                 changeRequest()
@@ -86,4 +85,4 @@ pipeline {
             cleanWs()
         }
     }
-}
+
