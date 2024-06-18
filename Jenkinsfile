@@ -1,6 +1,8 @@
 pipeline {
     agent any
-
+    parameters { 
+        choice(name: 'action', choices: ['apply', 'destroy'], description: 'Perform Action')
+    }
     environment {
         TF_WORKSPACE = 'dev' // Define your Terraform workspace
         AWS_REGION = 'ap-south-1'
@@ -71,7 +73,7 @@ pipeline {
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
-                        sh 'terraform apply -auto-approve'
+                        sh 'terraform ${action}'
                         }
                     }
                 }
