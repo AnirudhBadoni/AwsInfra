@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('On Commit') {
             when {
-                branch pattern: "^(?!main$).*", comparator: "REGEXP"
+                branch pattern: "^(?!main\$).*", comparator: "REGEXP"
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
