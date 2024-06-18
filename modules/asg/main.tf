@@ -8,7 +8,7 @@ data "aws_ami" "amazon_linux_2" {
     values = ["packer-ami"]
   }
  }
-}
+
 # terraform aws launch template
 resource "aws_launch_template" "ec2_asg" {
   name                  = "my-launch-template"
