@@ -1,77 +1,79 @@
 pipeline {
     agent any
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                script{
-                     // Checkout code from GitHub
-                    def branchName = env.BRANCH_NAME
-                    echo "Checking out code from branch: ${branchName}"
-                    checkout([$class: 'GitSCM', 
-                    branches: [[name: "${branchName}"]],  // Fetch code from all branches
-                    userRemoteConfigs: [[url: 'https://github.com/AnirudhBadoni/AwsInfra.git']]]) 
 
-                    // Get the latest commit hash
-                    def commitId = sh(script: 'git rev-parse HEAD', returnStdout: true).trim().take(7)
-                    env.IMAGE_TAG = "${branchName}-${commitId}"
-                    echo "Docker image tag: ${env.IMAGE_TAG}"
+    environment {
+        TF_WORKSPACE = 'dev' // Define your Terraform workspace
+    }
+
+    stages {
+        stage('On Commit') {
+            when {
+                branch pattern: "^(?!main$).*", comparator: "REGEXP"
+            }
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
+                    script {
+                        def branchName = env.BRANCH_NAME
+                        echo "Running Terraform commands on branch ${branchName}"
+
+                        sh 'terraform init'
+                        sh 'terraform validate'
+                        sh 'terraform fmt'
+                        sh 'terraform plan -out=plan.tfplan'
+
+                        // Optional: Run Checkov scan
+                        try {
+                            sh 'checkov -d .'
+                        } catch (Exception e) {
+                            echo 'Checkov scan failed, but proceeding with the pipeline.'
+                        }
+                    }
                 }
             }
         }
-        stage ('Initialize Terraform and validate') {
-            when { anyOf {branch "new-branch";changeRequest() } }
-            steps {
-                withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding', 
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'AWS_ACCOUNT'
-                ]]) {
-                dir('infra'){
-                sh 'terraform init -migrate-state'
-                sh 'terraform fmt'
-                sh 'terraform validate'
-                }
-                }
-            }
-            }
-        stage ('Terraform plan'){
+
+        stage('On Pull Request') {
             when {
-                branch 'new-branch'
+                changeRequest()
             }
             steps {
-                withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding', 
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'AWS_ACCOUNT'
-                ]]) {
-                dir('infra'){
-                sh 'terraform init'
-                sh 'terraform plan'
-                }
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    script {
+                        def prBranch = env.BRANCH_NAME
+                        echo "Running Terraform commands on pull request branch ${prBranch}"
+
+                        sh 'terraform init'
+                        sh 'terraform validate'
+                        sh 'terraform fmt'
+                        sh 'terraform plan -out=pr-plan.tfplan'
+                    }
                 }
             }
-        }        
-        stage ('Terraform plan & Action'){
+        }
+
+        stage('On Merge to Main') {
             when {
                 branch 'main'
             }
             steps {
-                withCredentials([[
-                $class: 'AmazonWebServicesCredentialsBinding', 
-                accessKeyVariable: 'AWS_ACCESS_KEY_ID', 
-                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY',
-                credentialsId: 'AWS_ACCOUNT'
-                ]]) {
-                dir('infra'){
-                sh 'terraform init'
-                sh 'terraform plan'
-                sh 'terraform ${action} --auto-approve'
-                }
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    script {
+                        def mainBranch = env.BRANCH_NAME
+                        echo "Running Terraform apply on main branch ${mainBranch}"
+
+                        sh 'terraform init'
+                        sh 'terraform validate'
+                        sh 'terraform fmt'
+                        sh 'terraform apply -auto-approve'
+                    }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
         }
     }
 }
