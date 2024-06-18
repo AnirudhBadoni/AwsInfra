@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         TF_WORKSPACE = 'dev' // Define your Terraform workspace
+        AWS_REGION = 'ap-south-1'
     }
 
     stages {
@@ -12,6 +13,7 @@ pipeline {
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
+                    withEnv(['AWS_PROFILE=default']){
                     script {
                         def branchName = env.BRANCH_NAME
                         echo "Running Terraform commands on branch ${branchName}"
@@ -29,8 +31,10 @@ pipeline {
                         }
                     }
                 }
+                }
             }
         }
+    }
 
         stage('On Pull Request') {
             when {
@@ -38,6 +42,7 @@ pipeline {
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
+                    withEnv(['AWS_PROFILE=default']){
                     script {
                         def prBranch = env.BRANCH_NAME
                         echo "Running Terraform commands on pull request branch ${prBranch}"
@@ -51,6 +56,7 @@ pipeline {
                 }
             }
         }
+        }
 
         stage('On Merge to Main') {
             when {
@@ -58,6 +64,7 @@ pipeline {
             }
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'AWS-CREDENTIALS']]) {
+                    withEnv(['AWS_PROFILE=default']){
                     script {
                         def mainBranch = env.BRANCH_NAME
                         echo "Running Terraform apply on main branch ${mainBranch}"
@@ -72,6 +79,7 @@ pipeline {
             }
         }
     }
+}
 
     post {
         always {
