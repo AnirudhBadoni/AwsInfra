@@ -73,7 +73,7 @@ pipeline {
                         sh 'terraform init'
                         sh 'terraform validate'
                         sh 'terraform fmt'
-                        sh 'terraform ${action}'
+                        sh 'terraform ${action} --auto-approve'
                         }
                     }
                 }
