@@ -2,17 +2,12 @@
 # use data source to get a registered amazon linux 2 ami
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
-  owners      = ["amazon"]
-  
+  owners      = ["self"]
   filter {
-    name   = "owner-alias"
-    values = ["amazon"]
+    name   = "tag:Name"
+    values = ["packer-ami"]
   }
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm*"]
-  }
+ }
 }
 # terraform aws launch template
 resource "aws_launch_template" "ec2_asg" {
